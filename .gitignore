@@ -1,1 +1,7 @@
 docs/
+*.log
+.env
+auth.json
+runtime.env
+home/user/secrets/
+home/user/backups/
