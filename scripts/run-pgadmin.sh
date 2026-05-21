@@ -60,4 +60,4 @@ exec "${PGADMIN_PYTHON}" -m gunicorn \
   --threads "${PGADMIN_THREADS:-25}" \
   --timeout "${PGADMIN_TIMEOUT:-120}" \
   --access-logfile - \
-  run_pgadmin:app
+  pgAdmin4:app

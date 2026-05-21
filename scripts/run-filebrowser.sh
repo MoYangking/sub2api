@@ -25,13 +25,27 @@ if ! configure_filebrowser; then
   configure_filebrowser
 fi
 
-if ! /home/user/filebrowser --database "${db}" users add "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}" \
-  --scope / \
-  --perm.admin >/dev/null 2>&1; then
-  /home/user/filebrowser --database "${db}" users update "${ADMIN_EMAIL}" \
+ensure_filebrowser_user() {
+  local username="$1"
+
+  if /home/user/filebrowser --database "${db}" users update "${username}" \
     --password "${ADMIN_PASSWORD}" \
     --scope / \
+    --perm.admin >/dev/null 2>&1; then
+    return 0
+  fi
+
+  /home/user/filebrowser --database "${db}" users add "${username}" "${ADMIN_PASSWORD}" \
+    --scope / \
     --perm.admin >/dev/null
+}
+
+if ! ensure_filebrowser_user "${ADMIN_EMAIL}"; then
+  stamp="$(date '+%Y%m%d_%H%M%S')"
+  log "FileBrowser user database is not usable; moving it aside"
+  mv -f "${db}" "${db}.invalid.${stamp}" 2>/dev/null || true
+  configure_filebrowser
+  ensure_filebrowser_user "${ADMIN_EMAIL}"
 fi
 
 exec /home/user/filebrowser \
