@@ -15,6 +15,7 @@ configure_filebrowser() {
     --address 0.0.0.0 \
     --port 8888 \
     --baseURL /filebrowser \
+    --minimumPasswordLength "${FILEBROWSER_MIN_PASSWORD_LENGTH:-8}" \
     --root / >/dev/null
 }
 
