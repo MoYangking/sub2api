@@ -85,5 +85,7 @@ else
   log "PostgreSQL restore skipped"
 fi
 
+/home/user/scripts/sync-sub2api-admin.sh
+
 date '+%s' > "${MARKER}"
 log "PostgreSQL restore phase complete"

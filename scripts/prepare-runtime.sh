@@ -24,6 +24,7 @@ if [ -f "${MARKER}" ]; then
 fi
 
 require_github_env
+require_admin_env
 /home/user/scripts/wait-for-sync.sh
 
 mkdir -p "${BACKUP_DIR}" "${SECRETS_DIR}" "${SUB2API_DATA_DIR}" \
@@ -76,7 +77,7 @@ chmod 600 "${RUNTIME_ENV_FILE}"
 
 load_runtime_env
 
-POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-$(rand_hex 24)}"
+POSTGRES_PASSWORD="${ADMIN_PASSWORD}"
 REDIS_PASSWORD="${REDIS_PASSWORD:-$(rand_hex 24)}"
 JWT_SECRET="${JWT_SECRET:-$(rand_hex 32)}"
 TOTP_ENCRYPTION_KEY="${TOTP_ENCRYPTION_KEY:-$(rand_hex 32)}"
@@ -96,7 +97,6 @@ chmod 600 "${RUNTIME_ENV_FILE}"
 load_runtime_env
 validate_name POSTGRES_USER "${POSTGRES_USER}"
 validate_name POSTGRES_DB "${POSTGRES_DB}"
-require_admin_env
 
 chown -R 1000:1000 "${HOME}/logs" "${BACKUP_DIR}" "${SECRETS_DIR}" \
   "${SUB2API_DATA_DIR}" "${PGADMIN_DATA_DIR}" "${FILEBROWSER_DATA_DIR}" \

@@ -9,13 +9,20 @@ wait_runtime_prepared
 db="${FILEBROWSER_DATA_DIR}/filebrowser.db"
 mkdir -p "${FILEBROWSER_DATA_DIR}"
 
+min_password_length="${FILEBROWSER_MIN_PASSWORD_LENGTH:-8}"
+if [ "${#ADMIN_PASSWORD}" -lt "${min_password_length}" ]; then
+  min_password_length="${#ADMIN_PASSWORD}"
+fi
+export FB_MINIMUM_PASSWORD_LENGTH="${min_password_length}"
+export FB_MINIMUM_PASSWORDLENGTH="${min_password_length}"
+
 configure_filebrowser() {
   /home/user/filebrowser --database "${db}" config init >/dev/null 2>&1 || true
   /home/user/filebrowser --database "${db}" config set \
     --address 0.0.0.0 \
     --port 8888 \
     --baseURL /filebrowser \
-    --minimumPasswordLength "${FILEBROWSER_MIN_PASSWORD_LENGTH:-8}" \
+    --minimumPasswordLength "${min_password_length}" \
     --root / >/dev/null
 }
 

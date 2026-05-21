@@ -49,7 +49,7 @@ WORKDIR /home/user
 
 RUN python3 -m venv "$VIRTUAL_ENV" && \
     "$VIRTUAL_ENV/bin/pip" install --no-cache-dir --upgrade pip && \
-    "$VIRTUAL_ENV/bin/pip" install --no-cache-dir --index-url "${PIP_INDEX_URL}" fastapi uvicorn httpx
+    "$VIRTUAL_ENV/bin/pip" install --no-cache-dir --index-url "${PIP_INDEX_URL}" fastapi uvicorn httpx bcrypt
 
 # pgAdmin's apt package provides the application virtualenv, but not every
 # package build ships a gunicorn executable. Install the module explicitly and

@@ -22,6 +22,7 @@
 - `/sync/`：GitHub 同步状态与管理
 
 pgAdmin、FileBrowser、GoTTY 都使用 `ADMIN_EMAIL` / `ADMIN_PASSWORD` 初始化或更新登录凭据。
+PostgreSQL 内部用户 `sub2api` 的密码也固定为 `ADMIN_PASSWORD`，方便在 pgAdmin 中连接本地数据库。
 
 ## 必填配置
 
@@ -143,6 +144,6 @@ docker run -d \
 ## 排障
 
 - sub2api 未启动：先看 `docker logs sub2api-gateway` 中 `prepare-runtime`、`restore`、`sub2api` 的日志。
-- pgAdmin 登录：使用 `ADMIN_EMAIL` / `ADMIN_PASSWORD`，入口是 `/pgadmin4/`。
+- pgAdmin 登录：使用 `ADMIN_EMAIL` / `ADMIN_PASSWORD`，入口是 `/pgadmin4/`。连接 PostgreSQL 时使用主机 `127.0.0.1`、端口 `5432`、用户 `sub2api`、密码 `ADMIN_PASSWORD`。
 - GitHub 备份没有更新：确认 `GITHUB_REPO`、`GITHUB_PAT`、`GIT_BRANCH` 和仓库权限。
 - 默认恢复覆盖了本地数据：这是 `RESTORE_SUB2API_ON_START=always` 的预期行为，可改为 `missing` 或 `never`。
