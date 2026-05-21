@@ -97,4 +97,9 @@ wait_file() {
   fail "${name} did not create ${path}"
 }
 
+wait_runtime_prepared() {
+  wait_file "${HOME}/.runtime-prepared" "runtime preparation" "${RUNTIME_PREPARE_TIMEOUT:-2100}"
+  load_runtime_env
+}
+
 load_runtime_env

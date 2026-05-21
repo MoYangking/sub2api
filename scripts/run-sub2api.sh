@@ -4,8 +4,7 @@ set -euo pipefail
 LOG_NAME=sub2api
 . /home/user/scripts/common-env.sh
 
-/home/user/scripts/prepare-runtime.sh
-. /home/user/scripts/common-env.sh
+wait_runtime_prepared
 wait_file "${HOME}/.sub2api-postgres-restore-complete" "PostgreSQL restore" 300
 wait_tcp "${REDIS_HOST}" "${REDIS_PORT}" Redis 120
 

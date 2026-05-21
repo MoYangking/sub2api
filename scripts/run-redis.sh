@@ -4,8 +4,7 @@ set -euo pipefail
 LOG_NAME=redis
 . /home/user/scripts/common-env.sh
 
-/home/user/scripts/prepare-runtime.sh
-. /home/user/scripts/common-env.sh
+wait_runtime_prepared
 
 mkdir -p "${REDIS_DATA_DIR}"
 

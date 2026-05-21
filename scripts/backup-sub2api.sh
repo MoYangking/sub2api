@@ -4,8 +4,7 @@ set -euo pipefail
 LOG_NAME=backup
 . /home/user/scripts/common-env.sh
 
-/home/user/scripts/prepare-runtime.sh
-. /home/user/scripts/common-env.sh
+wait_runtime_prepared
 
 BACKUP_INTERVAL="${BACKUP_INTERVAL:-3600}"
 BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-14}"
@@ -57,7 +56,7 @@ backup_once() {
     sqlite3 "${PGADMIN_DATA_DIR}/pgadmin4.db" ".backup '${state_stage}/home/user/pgadmin-data/pgadmin4.db'"
   fi
 
-  tar -czf "${state_tmp}" -C "${state_stage}" .
+  tar -czf "${state_tmp}" -C "${state_stage}" home data
   rm -rf "${state_stage}"
   trap - RETURN
   mv -f "${state_tmp}" "${state_out}"

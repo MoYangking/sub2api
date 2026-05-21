@@ -57,7 +57,12 @@ if [ "${should_restore_state}" = true ] && [ -s "${BACKUP_DIR}/latest.state.tar.
       home/user/pgadmin-data 2>/dev/null || true
   fi
   log "restoring state from ${BACKUP_DIR}/latest.state.tar.gz"
-  tar -xzf "${BACKUP_DIR}/latest.state.tar.gz" -C /
+  tar --extract --gzip --file "${BACKUP_DIR}/latest.state.tar.gz" \
+    --directory / \
+    --no-same-owner \
+    --no-same-permissions \
+    --delay-directory-restore \
+    --touch
 else
   log "state restore skipped"
 fi
@@ -65,6 +70,7 @@ fi
 mkdir -p "${SECRETS_DIR}" "${SUB2API_DATA_DIR}" "${PGADMIN_DATA_DIR}" \
   "${FILEBROWSER_DATA_DIR}" "${REDIS_DATA_DIR}" "${HOME}/logs"
 
+chmod 755 / /home /data "${HOME}" 2>/dev/null || true
 touch "${RUNTIME_ENV_FILE}"
 chmod 600 "${RUNTIME_ENV_FILE}"
 
@@ -93,7 +99,8 @@ validate_name POSTGRES_DB "${POSTGRES_DB}"
 require_admin_env
 
 chown -R 1000:1000 "${HOME}/logs" "${BACKUP_DIR}" "${SECRETS_DIR}" \
-  "${SUB2API_DATA_DIR}" "${PGADMIN_DATA_DIR}" "${FILEBROWSER_DATA_DIR}" 2>/dev/null || true
+  "${SUB2API_DATA_DIR}" "${PGADMIN_DATA_DIR}" "${FILEBROWSER_DATA_DIR}" \
+  "${REDIS_DATA_DIR}" 2>/dev/null || true
 
 date '+%s' > "${MARKER}"
 log "runtime prepared"

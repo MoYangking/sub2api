@@ -4,8 +4,7 @@ set -euo pipefail
 LOG_NAME=postgres
 . /home/user/scripts/common-env.sh
 
-/home/user/scripts/prepare-runtime.sh
-. /home/user/scripts/common-env.sh
+wait_runtime_prepared
 
 PG_MAJOR="$(ls /usr/lib/postgresql | sort -V | tail -n 1)"
 PG_BIN="/usr/lib/postgresql/${PG_MAJOR}/bin"
@@ -17,7 +16,7 @@ chmod 2775 "${PG_RUN_DIR}"
 
 if [ ! -s "${PGDATA}/PG_VERSION" ]; then
   log "initializing PostgreSQL data directory"
-  su -s /bin/bash postgres -c "${PG_BIN}/initdb -D $(shell_quote "${PGDATA}") --encoding=UTF8 --locale=C.UTF-8"
+  runuser -u postgres -- "${PG_BIN}/initdb" -D "${PGDATA}" --encoding=UTF8 --locale=C.UTF-8
 fi
 
 cat > "${PGDATA}/postgresql.auto.conf" <<EOF
@@ -38,4 +37,4 @@ EOF
 chown postgres:postgres "${PGDATA}/postgresql.auto.conf" "${PGDATA}/pg_hba.conf"
 
 log "starting PostgreSQL ${PG_MAJOR}"
-exec su -s /bin/bash postgres -c "exec ${PG_BIN}/postgres -D $(shell_quote "${PGDATA}")"
+exec runuser -u postgres -- "${PG_BIN}/postgres" -D "${PGDATA}"

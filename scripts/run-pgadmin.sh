@@ -4,8 +4,7 @@ set -euo pipefail
 LOG_NAME=pgadmin
 . /home/user/scripts/common-env.sh
 
-/home/user/scripts/prepare-runtime.sh
-. /home/user/scripts/common-env.sh
+wait_runtime_prepared
 wait_file "${HOME}/.sub2api-postgres-restore-complete" "PostgreSQL restore" 300
 
 mkdir -p "${PGADMIN_DATA_DIR}" "${PGADMIN_DATA_DIR}/storage" "${PGADMIN_DATA_DIR}/sessions" "${HOME}/logs/pgadmin"

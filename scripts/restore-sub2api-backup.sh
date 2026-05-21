@@ -4,8 +4,7 @@ set -euo pipefail
 LOG_NAME=restore
 . /home/user/scripts/common-env.sh
 
-/home/user/scripts/prepare-runtime.sh
-. /home/user/scripts/common-env.sh
+wait_runtime_prepared
 
 MARKER="${HOME}/.sub2api-postgres-restore-complete"
 LOCK_DIR="${HOME}/.sub2api-postgres-restore.lock"
@@ -27,14 +26,14 @@ sql_escape() {
 }
 
 psql_super() {
-  su -s /bin/bash postgres -c "psql -v ON_ERROR_STOP=1 --dbname=postgres -q -c $(shell_quote "$1")"
+  runuser -u postgres -- psql -v ON_ERROR_STOP=1 --dbname=postgres -q -c "$1"
 }
 
 role_pw="$(sql_escape "${POSTGRES_PASSWORD}")"
 psql_super "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${POSTGRES_USER}') THEN CREATE ROLE ${POSTGRES_USER} LOGIN PASSWORD '${role_pw}'; ELSE ALTER ROLE ${POSTGRES_USER} WITH LOGIN PASSWORD '${role_pw}'; END IF; END \$\$;"
 
 db_exists() {
-  su -s /bin/bash postgres -c "psql --dbname=postgres -tAc $(shell_quote "SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'")" | grep -q 1
+  runuser -u postgres -- psql --dbname=postgres -tAc "SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'" | grep -q 1
 }
 
 db_has_data() {
@@ -48,7 +47,7 @@ db_has_data() {
 
 ensure_database() {
   if ! db_exists; then
-    su -s /bin/bash postgres -c "createdb -O $(shell_quote "${POSTGRES_USER}") $(shell_quote "${POSTGRES_DB}")"
+    runuser -u postgres -- createdb -O "${POSTGRES_USER}" "${POSTGRES_DB}"
   fi
 }
 
@@ -76,8 +75,8 @@ if [ "${should_restore_pg}" = true ] && [ -s "${BACKUP_DIR}/latest.pg.dump" ]; t
   fi
 
   log "restoring PostgreSQL from ${BACKUP_DIR}/latest.pg.dump"
-  su -s /bin/bash postgres -c "dropdb --if-exists --force $(shell_quote "${POSTGRES_DB}")"
-  su -s /bin/bash postgres -c "createdb -O $(shell_quote "${POSTGRES_USER}") $(shell_quote "${POSTGRES_DB}")"
+  runuser -u postgres -- dropdb --if-exists --force "${POSTGRES_DB}"
+  runuser -u postgres -- createdb -O "${POSTGRES_USER}" "${POSTGRES_DB}"
   PGPASSWORD="${POSTGRES_PASSWORD}" pg_restore \
     -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" \
     --no-owner --role="${POSTGRES_USER}" "${BACKUP_DIR}/latest.pg.dump"
