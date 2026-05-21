@@ -49,10 +49,12 @@ backup_once() {
   rsync -a --exclude 'filebrowser.db*' "${FILEBROWSER_DATA_DIR}/" "${state_stage}/home/user/filebrowser-data/" 2>/dev/null || true
   rsync -a --exclude 'pgadmin4.db*' "${PGADMIN_DATA_DIR}/" "${state_stage}/home/user/pgadmin-data/" 2>/dev/null || true
 
-  if [ -s "${FILEBROWSER_DATA_DIR}/filebrowser.db" ]; then
+  if [ -s "${FILEBROWSER_DATA_DIR}/filebrowser.db" ] && \
+     sqlite3 "${FILEBROWSER_DATA_DIR}/filebrowser.db" 'PRAGMA quick_check;' >/dev/null 2>&1; then
     sqlite3 "${FILEBROWSER_DATA_DIR}/filebrowser.db" ".backup '${state_stage}/home/user/filebrowser-data/filebrowser.db'"
   fi
-  if [ -s "${PGADMIN_DATA_DIR}/pgadmin4.db" ]; then
+  if [ -s "${PGADMIN_DATA_DIR}/pgadmin4.db" ] && \
+     sqlite3 "${PGADMIN_DATA_DIR}/pgadmin4.db" 'PRAGMA quick_check;' >/dev/null 2>&1; then
     sqlite3 "${PGADMIN_DATA_DIR}/pgadmin4.db" ".backup '${state_stage}/home/user/pgadmin-data/pgadmin4.db'"
   fi
 

@@ -51,6 +51,13 @@ RUN python3 -m venv "$VIRTUAL_ENV" && \
     "$VIRTUAL_ENV/bin/pip" install --no-cache-dir --upgrade pip && \
     "$VIRTUAL_ENV/bin/pip" install --no-cache-dir --index-url "${PIP_INDEX_URL}" fastapi uvicorn httpx
 
+# pgAdmin's apt package provides the application virtualenv, but not every
+# package build ships a gunicorn executable. Install the module explicitly and
+# launch it with the pgAdmin Python interpreter.
+RUN set -eux; \
+    /usr/pgadmin4/venv/bin/python3 -m ensurepip --upgrade || true; \
+    /usr/pgadmin4/venv/bin/python3 -m pip install --no-cache-dir --index-url "${PIP_INDEX_URL}" gunicorn
+
 # Configure pgAdmin for direct gunicorn hosting behind OpenResty at /pgadmin4.
 RUN set -eux; \
     { \
