@@ -4,7 +4,7 @@ from __future__ import annotations
 
 职责：
 - 提供状态查询 `/sync/api/status`（包含本地与远端 HEAD）；
-- 一次性操作：`/sync/api/init`、`/sync/api/sync-now`、`/sync/api/pull`、`/sync/api/push`、`/sync/api/relink`、`/sync/api/track-empty`；
+- 一次性操作：`/sync/api/init`、`/sync/api/sync-now`、`/sync/api/backup-now`、`/sync/api/pull`、`/sync/api/push`、`/sync/api/relink`、`/sync/api/track-empty`；
 - 目标/黑名单管理：`/sync/api/targets`, `/sync/api/excludes`（持久化到 HIST_DIR/sync-config.json）。
 
 注意：
@@ -13,6 +13,8 @@ from __future__ import annotations
 """
 
 import os
+import subprocess
+import threading
 from typing import Dict
 
 from sync.core import git_ops
@@ -20,6 +22,68 @@ from sync.core.blacklist import ensure_git_info_exclude
 from sync.core.config import load_settings, save_file_overrides
 from sync.core.linker import migrate_and_link, precreate_dirlike, track_empty_dirs
 from sync.utils.logging import log, err
+
+
+_manual_backup_lock = threading.Lock()
+
+
+def _tail_text(text: str, limit: int = 4000) -> str:
+    """返回较短的尾部输出，避免 API 错误响应过长。"""
+    text = (text or "").strip()
+    if len(text) <= limit:
+        return text
+    return "...\n" + text[-limit:]
+
+
+def _run_sub2api_backup_once() -> str:
+    """执行一次 sub2api 一致性备份，生成 latest.* 快照。"""
+    backup_script = os.environ.get("SUB2API_BACKUP_SCRIPT", "/home/user/scripts/backup-sub2api.sh")
+    if not os.path.exists(backup_script):
+        raise RuntimeError(f"backup script not found: {backup_script}")
+
+    timeout = int(os.environ.get("MANUAL_BACKUP_TIMEOUT", "900"))
+    env = os.environ.copy()
+    env["BACKUP_INTERVAL"] = "0"
+    home = env.get("HOME") or "/home/user"
+    env["HOME"] = home
+
+    try:
+        proc = subprocess.run(
+            ["/bin/bash", backup_script],
+            cwd=home,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as e:
+        output = "\n".join([str(e.stdout or ""), str(e.stderr or "")])
+        detail = _tail_text(output)
+        raise RuntimeError(f"backup timed out after {timeout}s" + (f": {detail}" if detail else "")) from e
+
+    output = "\n".join([proc.stdout or "", proc.stderr or ""])
+    if proc.returncode != 0:
+        detail = _tail_text(output)
+        raise RuntimeError(
+            f"backup script exited with code {proc.returncode}" + (f": {detail}" if detail else "")
+        )
+    return _tail_text(output)
+
+
+def _sync_to_github(daemon, commit_message: str) -> bool:
+    """将备份目录中的变化提交并推送到 GitHub。"""
+    st = load_settings()
+    if daemon is not None:
+        daemon.pull_commit_push(commit_message=commit_message)
+        git_ops.run(["git", "push", "origin", st.branch], cwd=st.hist_dir)
+        return True
+
+    git_ops.run(["git", "pull", "--rebase", "origin", st.branch], cwd=st.hist_dir, check=False)
+    changed = git_ops.add_all_and_commit_if_needed(st.hist_dir, commit_message)
+    if changed:
+        git_ops.push(st.hist_dir, st.branch)
+    return changed
 
 
 def _remote_url(pat: str, repo: str) -> str:
@@ -110,18 +174,26 @@ def create_app(daemon=None):
     def api_sync_now():
         """立即执行一次同步：pull --rebase → commit（如有）→ push。"""
         try:
-            if daemon is not None:
-                daemon.pull_commit_push()
-                return {"ok": True}
-            # 后备：直接按流程执行
-            st = load_settings()
-            git_ops.run(["git", "pull", "--rebase", "origin", st.branch], cwd=st.hist_dir, check=False)
-            changed = git_ops.add_all_and_commit_if_needed(st.hist_dir, "chore(sync): sync-now")
-            if changed:
-                git_ops.push(st.hist_dir, st.branch)
-            return {"ok": True}
+            changed = _sync_to_github(daemon, "chore(sync): sync-now")
+            return {"ok": True, "changed": changed}
         except Exception as e:
             return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+    # 手动备份 sub2api 数据库并推送到 GitHub
+    @app.post("/sync/api/backup-now")
+    def api_backup_now():
+        """立即生成 PostgreSQL/Redis/状态快照，并同步到 GitHub。"""
+        if not _manual_backup_lock.acquire(blocking=False):
+            return JSONResponse({"ok": False, "error": "已有手动备份正在执行，请稍后再试"}, status_code=409)
+        try:
+            output = _run_sub2api_backup_once()
+            changed = _sync_to_github(daemon, "chore(backup): manual sub2api backup")
+            return {"ok": True, "backed_up": True, "synced": True, "changed": changed, "output": output}
+        except Exception as e:
+            err(str(e))
+            return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+        finally:
+            _manual_backup_lock.release()
 
     # 仅拉取
     @app.post("/sync/api/pull")

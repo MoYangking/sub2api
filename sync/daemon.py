@@ -283,7 +283,7 @@ class SyncDaemon:
             err(f"Failed to process large files: {e}")
     
     # -------- 同步循环 --------
-    def pull_commit_push(self) -> None:
+    def pull_commit_push(self, commit_message: str = "chore(sync): periodic commit") -> None:
         """一次完整的同步周期：先拉取(rebase)，立即恢复LFS，再检测大文件，再提交，再推送。
 
         - 使用 `git pull --rebase` 尽量维持线性历史；
@@ -336,7 +336,7 @@ class SyncDaemon:
             
             # 4. 提交变更（包括新的指针文件和 manifest）
             changed = git_ops.add_all_and_commit_if_needed(
-                self.st.hist_dir, "chore(sync): periodic commit"
+                self.st.hist_dir, commit_message
             )
             
             # 5. 若有变更或远端领先，尝试推送

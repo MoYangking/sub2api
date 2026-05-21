@@ -2,18 +2,21 @@
 set -euo pipefail
 
 if [ -n "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]; then
+  tunnel_token="${CLOUDFLARE_TUNNEL_TOKEN}"
+  unset CLOUDFLARE_TUNNEL_TOKEN
+
   marker_dir="/home/user/.cloudflared"
   marker_file="${marker_dir}/service-install-token.sha256"
-  token_hash="$(printf '%s' "${CLOUDFLARE_TUNNEL_TOKEN}" | sha256sum | awk '{print $1}')"
+  token_hash="$(printf '%s' "${tunnel_token}" | sha256sum | awk '{print $1}')"
   mkdir -p "${marker_dir}"
 
   if [ ! -f "${marker_file}" ] || [ "$(cat "${marker_file}")" != "${token_hash}" ]; then
     cloudflared service uninstall >/dev/null 2>&1 || true
-    cloudflared service install "${CLOUDFLARE_TUNNEL_TOKEN}" || true
+    cloudflared service install "${tunnel_token}" || true
     printf '%s\n' "${token_hash}" > "${marker_file}"
   fi
 
-  exec cloudflared tunnel --no-autoupdate run --token "${CLOUDFLARE_TUNNEL_TOKEN}"
+  exec cloudflared tunnel --no-autoupdate run --token "${tunnel_token}"
 fi
 
 case "${CLOUDFLARE_QUICK_TUNNEL:-0}" in

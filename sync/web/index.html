@@ -220,6 +220,11 @@
                                     </template>
                                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                                         <el-button type="primary" @click="doAction('/sync/api/sync-now', '立即同步')" :loading="loading">立即同步</el-button>
+                                        <el-popconfirm title="确定要立即备份数据库并推送到 GitHub 吗？" @confirm="doManualBackup">
+                                            <template #reference>
+                                                <el-button type="danger" plain :loading="loading">备份到 GitHub</el-button>
+                                            </template>
+                                        </el-popconfirm>
                                         <el-button type="success" @click="doAction('/sync/api/push', '仅推送')" :loading="loading">仅推送</el-button>
                                         <el-button type="warning" @click="doAction('/sync/api/pull', '仅拉取')" :loading="loading">仅拉取</el-button>
                                         <el-button type="info" @click="doAction('/sync/api/relink', '重新链接')" :loading="loading">重新链接</el-button>
@@ -600,6 +605,7 @@
                 };
 
                 const doInit = () => doAction('/sync/api/init', '初始化');
+                const doManualBackup = () => doAction('/sync/api/backup-now', '备份到 GitHub');
                 const doReset = () => doAction('/sync/api/reset', '强制重置');
 
                 const saveTargets = async () => {
@@ -741,6 +747,7 @@
                     loadStatus,
                     doAction,
                     doInit,
+                    doManualBackup,
                     doReset,
                     saveTargets,
                     saveExcludes,

@@ -73,7 +73,6 @@ RUN set -eux; \
       printf '%s\n' 'MASTER_PASSWORD_REQUIRED = False'; \
       printf '%s\n' 'DEFAULT_SERVER = "127.0.0.1"'; \
       printf '%s\n' 'DEFAULT_SERVER_PORT = 5050'; \
-      printf '%s\n' 'SCRIPT_NAME = os.environ.get("SCRIPT_NAME", "/pgadmin4")'; \
       printf '%s\n' 'WTF_CSRF_SSL_STRICT = False'; \
     } > /usr/pgadmin4/web/config_local.py
 
