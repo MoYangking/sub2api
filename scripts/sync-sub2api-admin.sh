@@ -33,7 +33,7 @@ PGPASSWORD="${POSTGRES_PASSWORD}" psql \
 CREATE TEMP TABLE _sub2api_admin_sync (
   email text NOT NULL,
   password_hash text NOT NULL
-) ON COMMIT DROP;
+);
 
 INSERT INTO _sub2api_admin_sync (email, password_hash)
 VALUES (:'admin_email', :'password_hash');
