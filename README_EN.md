@@ -4,7 +4,7 @@ This image runs [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) in a sin
 
 ## Components
 
-- sub2api on `127.0.0.1:8080`
+- sub2api on `127.0.0.1:19090`
 - PostgreSQL 15+ on `127.0.0.1:5432`
 - Redis 7+ on `127.0.0.1:6379`
 - pgAdmin 4 at `/pgadmin4/`

@@ -12,7 +12,7 @@ wait_tcp "${REDIS_HOST}" "${REDIS_PORT}" Redis 120
 export DATA_DIR="${SUB2API_DATA_DIR}"
 export AUTO_SETUP=true
 export SERVER_HOST=127.0.0.1
-export SERVER_PORT=8080
+export SERVER_PORT=19090
 export SERVER_MODE="${SERVER_MODE:-release}"
 export RUN_MODE="${RUN_MODE:-standard}"
 export TZ="${TZ:-Asia/Shanghai}"
